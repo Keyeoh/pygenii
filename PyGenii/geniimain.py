@@ -11,6 +11,36 @@ import sys
 import PyGenii.modulevisitor
 
 
+class Stats:
+    """Encapsulate stats and reporting capabilities"""
+    def __init__(self):
+        self.complexity_table = []
+        self.summary = {'X':(0, 0), 'C':(0, 0), 'M':(0, 0), 'F':(0, 0)}
+        
+    def filter_and_print_result(self, args, output_file):
+        """Filter rows under threshold and print table"""
+        is_critical = lambda row : row[2] > args.threshold and row[0] in "FM"
+        filtered_table = ([row for row in self.complexity_table 
+            if is_critical(row)])
+        
+        if len(self.complexity_table) == 0:
+            output_file.write("\nNo python files to parse!\n")
+        elif len(filtered_table) == 0:
+            output_file.write("\nThis code looks all good!\n")
+        else:
+            output_file.write("\nCritical functions\n")
+            pretty_print(filtered_table, output_file)
+            
+    def print_complexity_report(self, args, output_file):
+        if args.complexity and len(self.complexity_table) > 0:
+            output_file.write("\nComplexity Report\n")
+            pretty_print(self.complexity_table, output_file)
+            
+    def print_summary(self, args, output_file):
+        if args.summary and len(self.complexity_table) > 0:
+            output_file.write("\nTotal cumulative statistics\n")
+            pretty_print_summary(self.summary, output_file)
+
 def parse_args(argv):
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
@@ -130,7 +160,7 @@ def pretty_print_summary(summary, output_file=sys.stdout):
     output_file.write(sep_str)
 
     
-def parse_module(source_file, module_name, complexity_table, summary):
+def parse_module(source_file, module_name, stats):
     """Parse given module and return stats"""
     parse_tree = ast.parse(source_file.read(), module_name)
     
@@ -139,21 +169,21 @@ def parse_module(source_file, module_name, complexity_table, summary):
 
     short_name = os.path.basename(module_name).replace(".py", "")
     
-    complexity_table.append(('X', short_name, 
+    stats.complexity_table.append(('X', short_name, 
         mod_visitor.module_complexity))
   
-    count, total_complexity = summary['X']
-    summary['X'] = (count + 1, total_complexity + 
+    count, total_complexity = stats.summary['X']
+    stats.summary['X'] = (count + 1, total_complexity + 
         mod_visitor.module_complexity)
         
     for class_name in mod_visitor.stats:
         if class_name:
             qualified_name = '.'.join([short_name, class_name])
-            complexity_table.append(('C', qualified_name, 
+            stats.complexity_table.append(('C', qualified_name, 
                 mod_visitor.class_complexity[class_name]))
            
-            count, total_complexity = summary['C']
-            summary['C'] = (count + 1, total_complexity + 
+            count, total_complexity = stats.summary['C']
+            stats.summary['C'] = (count + 1, total_complexity + 
                 mod_visitor.class_complexity[class_name])
             type_id = 'M'
         else:
@@ -165,10 +195,10 @@ def parse_module(source_file, module_name, complexity_table, summary):
                     func_name])
             else:
                 qualified_name = '.'.join([short_name, func_name])
-            complexity_table.append((type_id, qualified_name, complexity))
+            stats.complexity_table.append((type_id, qualified_name, complexity))
            
-            count, total_complexity = summary[type_id]
-            summary[type_id] = (count + 1, total_complexity + 
+            count, total_complexity = stats.summary[type_id]
+            stats.summary[type_id] = (count + 1, total_complexity + 
                 complexity)
     
     
@@ -205,24 +235,23 @@ def main(argv=None):
     logging.debug("module_list %s", module_list)
 
     # Module parsing
-    complexity_table = []
-    summary = {'X':(0, 0), 'C':(0, 0), 'M':(0, 0), 'F':(0, 0)}
+    global_stats = Stats()
         
     for module_name in module_list:
         logging.info("Parsing module %s", module_name)
         source_file = open(module_name)
         
-        parse_module(source_file, module_name, complexity_table, summary)
+        parse_module(source_file, module_name, global_stats)
         
         source_file.close()
    
     logging.info("Evaluating complexity table")
-    for row in complexity_table:
+    for row in global_stats.complexity_table:
         logging.debug("%s", row)
         
     logging.info("Evaluating summary table")
-    for key in summary:
-        logging.debug("%s %s", key, summary[key])
+    for key in global_stats.summary:
+        logging.debug("%s %s", key, global_stats.summary[key])
             
     # Pipe to the right output stream
     if args.out_file:
@@ -231,17 +260,13 @@ def main(argv=None):
         output_file = sys.stdout
          
     # Main result
-    filter_and_print_result(complexity_table, args, output_file)
+    global_stats.filter_and_print_result(args, output_file)
     
-    # Complexity report
-    if args.complexity and len(complexity_table) > 0:
-        output_file.write("\nComplexity Report\n")
-        pretty_print(complexity_table, output_file)
-        
+    # Complexity report        
+    global_stats.print_complexity_report(args, output_file)
+    
     # Main summary
-    if args.summary and len(complexity_table) > 0:
-        output_file.write("\nTotal cumulative statistics\n")
-        pretty_print_summary(summary, output_file)
+    global_stats.print_summary(args, output_file)        
     
     # Close file, if necessary
     if args.out_file:
