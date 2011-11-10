@@ -7,3 +7,4 @@ setup(name="PyGenii",
     packages=['PyGenii'],
     scripts=['genii', 'genii.bat']
 )
+
