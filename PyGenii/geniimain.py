@@ -11,7 +11,7 @@ import sys
 import PyGenii.modulevisitor
 
 
-def parse_args():
+def parse_args(argv):
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
         description="Evaluate cyclomatic complexity of Python modules")
@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument('files', type=str, nargs='+', 
         help="input files")
     
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     
     if (args.allItems):
         args.complexity = True
@@ -186,9 +186,12 @@ def filter_and_print_result(complexity_table, args, output_file):
         pretty_print(filtered_table, output_file)
     
     
-def main():
+def main(argv=None):
     """Main function"""
-    args = parse_args()
+    if argv is None:
+        argv = sys.argv
+   
+    args = parse_args(argv)
     
     verbosity_list = [logging.WARNING, logging.INFO, logging.DEBUG]      
         
@@ -247,5 +250,5 @@ def main():
     logging.info("Finished")
    
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
     
