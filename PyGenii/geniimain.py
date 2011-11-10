@@ -32,11 +32,13 @@ class Stats:
             pretty_print(filtered_table, output_file)
             
     def print_complexity_report(self, args, output_file):
+        """Print complexity table in a clear way"""
         if args.complexity and len(self.complexity_table) > 0:
             output_file.write("\nComplexity Report\n")
             pretty_print(self.complexity_table, output_file)
             
     def print_summary(self, args, output_file):
+        """Print summary if asked by the user"""
         if args.summary and len(self.complexity_table) > 0:
             output_file.write("\nTotal cumulative statistics\n")
             pretty_print_summary(self.summary, output_file)
