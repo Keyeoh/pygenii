@@ -1,0 +1,3 @@
+#!C:\Python32\python.exe
+from PyGenii import modulevisitor, geniimain
+geniimain.main()
