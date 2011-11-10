@@ -44,6 +44,7 @@ def parse_args():
 
     return args
 
+    
 def add_module(item_name, args, module_list):
     """Recursively add items to module list"""
     if os.path.isfile(item_name) and item_name.endswith(".py"):
@@ -170,16 +171,20 @@ def parse_module(source_file, module_name, complexity_table, summary):
             summary[type_id] = (count + 1, total_complexity + 
                 complexity)
     
+    
 def filter_and_print_result(complexity_table, args, output_file):
     """Filter rows under threshold and print table"""
     is_critical = lambda row : row[2] > args.threshold and row[0] in "FM"
     filtered_table = [row for row in complexity_table if is_critical(row)]
-        
-    if len(filtered_table) == 0:
+    
+    if len(complexity_table) == 0:
+        output_file.write("\nNo python files to parse!\n")
+    elif len(filtered_table) == 0:
         output_file.write("\nThis code looks all good!\n")
     else:
         output_file.write("\nCritical functions\n")
         pretty_print(filtered_table, output_file)
+    
     
 def main():
     """Main function"""
@@ -231,7 +236,7 @@ def main():
         pretty_print(complexity_table, output_file)
         
     # Main summary
-    if args.summary:
+    if args.summary and len(complexity_table) > 0:
         output_file.write("\nTotal cumulative statistics\n")
         pretty_print_summary(summary, output_file)
     
