@@ -16,6 +16,7 @@ class Stats:
     def __init__(self):
         self.complexity_table = []
         self.summary = {'X':(0, 0), 'C':(0, 0), 'M':(0, 0), 'F':(0, 0)}
+        self.module_table = []
     
     @staticmethod
     def pretty_print(complexity_table, output_file=sys.stdout):
@@ -71,7 +72,42 @@ class Stats:
         if args.summary and len(self.complexity_table) > 0:
             output_file.write("\nTotal cumulative statistics\n")
             self.pretty_print_summary(output_file)
+    
+    def print_module_stats(self, args, output_file):
+        """Print module statistics"""
+        if args.module_stats and len(self.complexity_table) > 0:
+            output_file.write("\nModule statistics\n")
+            self.pretty_print_module_stats(output_file)
+                
+    def pretty_print_module_stats(self, output_file=sys.stdout):
+        """Print statistics summary"""
+        max_name_length = max([len(item_name) for (item_name, _, _, _, _) 
+            in self.module_table])
             
+        col_sizes = max_name_length + 1, 7, 5, 5, 5, 5
+        row_col_sizes = (col_sizes[0], col_sizes[1] - 3, col_sizes[2] + 1, 
+            col_sizes[3], col_sizes[4], col_sizes[5])
+        col_total = sum(col_sizes)
+        
+        sep_str = col_total * '-' + '\n'    
+        header_str = ("Name".center(col_sizes[0]) 
+            + "Count".center(col_sizes[1]) + "Sum".center(col_sizes[2]) 
+            + "Min".center(col_sizes[2]) + "Avg".center(col_sizes[2]) 
+            + "Max".center(col_sizes[2]) + '\n')
+            
+        output_file.write(sep_str)
+        output_file.write(header_str)
+        output_file.write(sep_str)
+        
+        row_format_str = (" {0:<%d}{1:>%d}{2:>%d}{3:>%d}{4:>%d}{5:>%d}" 
+            % row_col_sizes)
+        for name, count, total, min_value, max_value in self.module_table:
+            row_str = row_format_str.format(name, count, total, min_value, 
+                int(total / count), max_value) + '\n'
+            output_file.write(row_str)
+            
+        output_file.write(sep_str)
+        
     def pretty_print_summary(self, output_file=sys.stdout):
         """Print statistics summary"""
         col_sizes = 6, 7, 12
@@ -104,6 +140,9 @@ def parse_args(argv):
     parser.add_argument('-c', '--complexity', dest='complexity', 
         action='store_true', default=False, 
         help='print complexity details for each file/module')
+    parser.add_argument('-m', '--modulestats', dest='module_stats', 
+        action='store_true', default=False,
+        help='print, for each module, a descriptive report of complexities')
     parser.add_argument('-o', '--outfile', dest='out_file',
         default=None, help='output to OUTFILE (default=stdout)')
     parser.add_argument('-r', '--recursive', dest='recurs',
@@ -128,6 +167,7 @@ def parse_args(argv):
     if (args.allItems):
         args.complexity = True
         args.summary = True
+        args.module_stats = True
 
     return args
 
@@ -172,11 +212,14 @@ def parse_module(source_file, module_name, stats, args):
     """Parse given module and return stats"""
     parse_tree = ast.parse(source_file.read(), module_name)
     
-    mod_visitor = PyGenii.modulevisitor.ModuleVisitor(args.exceptions)
-    mod_visitor.visit(parse_tree)
-
     short_name = os.path.basename(module_name).replace(".py", "")
     
+    if short_name.startswith("__"):
+        return
+    
+    mod_visitor = PyGenii.modulevisitor.ModuleVisitor(args.exceptions)
+    mod_visitor.visit(parse_tree)
+        
     stats.complexity_table.append(('X', short_name, 
         mod_visitor.module_complexity))
   
@@ -184,6 +227,8 @@ def parse_module(source_file, module_name, stats, args):
     stats.summary['X'] = (count + 1, total_complexity + 
         mod_visitor.module_complexity)
         
+    module_complexities = []
+    
     for class_name in mod_visitor.stats:
         if class_name:
             qualified_name = '.'.join([short_name, class_name])
@@ -208,8 +253,14 @@ def parse_module(source_file, module_name, stats, args):
             count, total_complexity = stats.summary[type_id]
             stats.summary[type_id] = (count + 1, total_complexity + 
                 complexity)
-    
-    
+                
+            module_complexities.append(complexity)
+            
+    stats.module_table.append((short_name, len(module_complexities), 
+        sum(module_complexities), min(module_complexities), 
+        max(module_complexities)))
+            
+       
 def main(argv=None):
     """Main function"""
     if argv is None:
@@ -261,6 +312,9 @@ def main(argv=None):
     
     # Main summary
     global_stats.print_summary(args, output_file)        
+    
+    # Module stats
+    global_stats.print_module_stats(args, output_file)
     
     # Close file, if necessary
     if args.out_file:
