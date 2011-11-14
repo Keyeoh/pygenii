@@ -8,51 +8,68 @@ import ast
 
 class ModuleVisitor(ast.NodeVisitor):
     """Visit nodes in parse tree"""
+
+    
+    class Status:
+        """Abstract current status description"""
+        def __init__(self):
+            self.class_name = None
+            self.function_name = None
+            self.decision_points = 0
+            self.exit_points = 0
+            
+        def increment_decision_points(self, count=1):
+            """Shorthand for incrementing decision points"""
+            self.decision_points = self.decision_points + count
+            
+        def increment_exit_points(self):
+            """Shorthand for incrementing exit points"""
+            self.exit_points = self.exit_points + 1
+
+            
     def __init__(self, use_exceptions):
         ast.NodeVisitor.__init__(self)
         self.use_exceptions = use_exceptions
-        self.current_class = None
-        self.current_function = None
-        self.current_decision_points = 0
-        self.current_exit_points = 0
+        self.current_status = ModuleVisitor.Status()
         self.stats = {}
         self.module_complexity = 0
         self.class_complexity = {}
     
     def visit_Module(self, node):
         """Deal with module/file"""
-        self.current_class = None
-        self.stats[self.current_class] = []
-        self.class_complexity[self.current_class] = 0
+        self.current_status.class_name = None
+        self.stats[self.current_status.class_name] = []
+        self.class_complexity[self.current_status.class_name] = 0
         ast.NodeVisitor.generic_visit(self, node)
         
     def visit_ClassDef(self, node):
         """Deal with class information"""
-        self.current_class = node.name
-        self.stats[self.current_class] = []
-        self.class_complexity[self.current_class] = 0
+        self.current_status.class_name = node.name
+        self.stats[self.current_status.class_name] = []
+        self.class_complexity[self.current_status.class_name] = 0
         ast.NodeVisitor.generic_visit(self, node)
-        self.current_class = None
+        self.current_status.class_name = None
         
     def visit_FunctionDef(self, node):
         """Collect function statistics"""
-        self.current_function = node.name
-        self.current_decision_points = 0
-        self.current_exit_points = 0
+        self.current_status.function_name = node.name
+        self.current_status.decision_points = 0
+        self.current_status.exit_points = 0
         ast.NodeVisitor.generic_visit(self, node)
-        self.current_exit_points = max(1, self.current_exit_points)
-        complexity = (self.current_decision_points - self.current_exit_points 
-            + 2)
-        self.stats[self.current_class].append((self.current_function, 
-            complexity))
-        self.class_complexity[self.current_class] = (
-            self.class_complexity[self.current_class] + complexity)
+        self.current_status.exit_points = max(1, 
+            self.current_status.exit_points)
+        complexity = (self.current_status.decision_points - 
+            self.current_status.exit_points + 2)
+        self.stats[self.current_status.class_name].append(
+            (self.current_status.function_name, complexity))
+        self.class_complexity[self.current_status.class_name] = (
+            self.class_complexity[self.current_status.class_name] + complexity)
         self.module_complexity = self.module_complexity + complexity
-        self.current_function = None
+        self.current_status.function_name = None
            
     def visit_decision_point(self, node):
         """Visit decision point node"""
-        self.current_decision_points = self.current_decision_points + 1
+        self.current_status.increment_decision_points()
         ast.NodeVisitor.generic_visit(self, node)
     
     visit_If = visit_And = visit_Or = visit_decision_point
@@ -60,11 +77,11 @@ class ModuleVisitor(ast.NodeVisitor):
         
     def visit_Return(self, node):
         """Visit Return node"""
-        self.current_exit_points = self.current_exit_points + 1
+        self.current_status.increment_exit_points()
         ast.NodeVisitor.generic_visit(self, node)
     
     def visit_ExceptHandler(self, node):
         """Visit a Exception Handler node"""
         if self.use_exceptions:
-            self.current_decision_points = self.current_decision_points + 1
+            self.current_status.increment_decision_points()
         ast.NodeVisitor.generic_visit(self, node)
