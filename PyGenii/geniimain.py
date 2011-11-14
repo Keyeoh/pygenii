@@ -43,28 +43,32 @@ class Stats:
             output_file.write("\nTotal cumulative statistics\n")
             pretty_print_summary(self.summary, output_file)
 
+            
 def parse_args(argv):
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
         description="Evaluate cyclomatic complexity of Python modules")
+    parser.add_argument('-a', '--all', dest='allItems', action='store_true', 
+        default=False, help='print all metrics')
     parser.add_argument('-c', '--complexity', dest='complexity', 
         action='store_true', default=False, 
         help='print complexity details for each file/module')
-    parser.add_argument('-t', '--threshold', dest='threshold', type=int, 
-        default=7, help='threshold of complexity to be ignored (default=7)')
-    parser.add_argument('-a', '--all', dest='allItems', action='store_true', 
-        default=False, help='print all metrics')
+    parser.add_argument('-o', '--outfile', dest='out_file',
+        default=None, help='output to OUTFILE (default=stdout)')
+    parser.add_argument('-r', '--recursive', dest='recurs',
+        action='store_true', default=False,
+        help='process files recursively in a folder')
     parser.add_argument('-s', '--summary', dest='summary',
         action='store_true', default=False,
         help='print cumulative summary for each file/module')
-    parser.add_argument('-r', '--recurs', dest='recurs',
-        action='store_true', default=False,
-        help='process files recursively in a folder')
+    parser.add_argument('-t', '--threshold', dest='threshold', type=int, 
+        default=7, help='threshold of complexity to be ignored (default=7)')
     parser.add_argument('-v', '--verbosity', choices=[0, 1, 2], 
         dest='verbosity', default=0, type=int,
         help='controls how much info is printed on screen')
-    parser.add_argument('-o', '--outfile', dest='out_file',
-        default=None, help='output to OUTFILE (default=stdout)')
+    parser.add_argument('-x', '--exceptions', dest='exceptions', 
+        action='store_true', default=False, 
+        help='use exception handling code when measuring complexity')
     parser.add_argument('files', type=str, nargs='+', 
         help="input files")
     
