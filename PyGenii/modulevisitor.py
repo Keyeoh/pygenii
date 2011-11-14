@@ -8,8 +8,9 @@ import ast
 
 class ModuleVisitor(ast.NodeVisitor):
     """Visit nodes in parse tree"""
-    def __init__(self):
+    def __init__(self, use_exceptions):
         ast.NodeVisitor.__init__(self)
+        self.use_exceptions = use_exceptions
         self.current_class = None
         self.current_function = None
         self.current_decision_points = 0
@@ -56,9 +57,14 @@ class ModuleVisitor(ast.NodeVisitor):
     
     visit_If = visit_And = visit_Or = visit_decision_point
     visit_For = visit_While = visit_decision_point
-
         
     def visit_Return(self, node):
         """Visit Return node"""
         self.current_exit_points = self.current_exit_points + 1
+        ast.NodeVisitor.generic_visit(self, node)
+    
+    def visit_ExceptHandler(self, node):
+        """Visit a Exception Handler node"""
+        if self.use_exceptions:
+            self.current_decision_points = self.current_decision_points + 1
         ast.NodeVisitor.generic_visit(self, node)

@@ -166,11 +166,11 @@ def pretty_print_summary(summary, output_file=sys.stdout):
     output_file.write(sep_str)
 
     
-def parse_module(source_file, module_name, stats):
+def parse_module(source_file, module_name, stats, args):
     """Parse given module and return stats"""
     parse_tree = ast.parse(source_file.read(), module_name)
     
-    mod_visitor = PyGenii.modulevisitor.ModuleVisitor()
+    mod_visitor = PyGenii.modulevisitor.ModuleVisitor(args.exceptions)
     mod_visitor.visit(parse_tree)
 
     short_name = os.path.basename(module_name).replace(".py", "")
@@ -247,7 +247,7 @@ def main(argv=None):
         logging.info("Parsing module %s", module_name)
         source_file = open(module_name)
         
-        parse_module(source_file, module_name, global_stats)
+        parse_module(source_file, module_name, global_stats, args)
         
         source_file.close()
    
