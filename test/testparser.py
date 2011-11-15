@@ -127,7 +127,7 @@ class A:
         pass
 """
         expected_complexity = [('X', 'test', 2), ('C', 'test.A', 1), 
-            ('C', 'test.B', 1), ('M', 'test.B.f', 1), ('M', 'test.A.g', 1)]
+            ('M', 'test.A.g', 1), ('C', 'test.B', 1), ('M', 'test.B.f', 1)]
         expected_summary = {'X':(1, 2), 'C':(2, 2), 'M':(2, 2), 'F':(0, 0)}
         expected_module = [('test', 2, 2, 1, 1, 1)]
         

@@ -44,21 +44,26 @@ class ModuleVisitor(ast.NodeVisitor):
         
     def visit_ClassDef(self, node):
         """Deal with class information"""
+        old_class_name = self.current_status.class_name
         self.current_status.class_name = node.name
         self.stats[self.current_status.class_name] = []
         self.class_complexity[self.current_status.class_name] = 0
+        
         ast.NodeVisitor.generic_visit(self, node)
-        self.current_status.class_name = None
+        
+        self.current_status.class_name = old_class_name
         
     def visit_FunctionDef(self, node):
         """Collect function statistics"""
         self.current_status.function_name = node.name
         self.current_status.decision_points = 0
         self.current_status.exit_points = 0
-        ast.NodeVisitor.generic_visit(self, node)
-            
-        self.current_status.exit_points = max(1, 
-            self.current_status.exit_points)
+        
+        self.depth = 0
+        
+        ast.NodeVisitor.generic_visit(self, node)      
+        
+        self.current_status.exit_points = self.current_status.exit_points + 1
         complexity = (self.current_status.decision_points - 
             self.current_status.exit_points + 2)
         self.stats[self.current_status.class_name].append(
@@ -71,14 +76,21 @@ class ModuleVisitor(ast.NodeVisitor):
     def visit_decision_point(self, node):
         """Visit decision point node"""
         self.current_status.increment_decision_points()
+        
+        self.depth = self.depth + 1
+        
         ast.NodeVisitor.generic_visit(self, node)
+        
+        self.depth = self.depth - 1
     
     visit_If = visit_And = visit_Or = visit_decision_point
     visit_For = visit_While = visit_decision_point
         
     def visit_Return(self, node):
         """Visit Return node"""
-        self.current_status.increment_exit_points()
+        
+        if self.depth != 0:
+            self.current_status.increment_exit_points()
         ast.NodeVisitor.generic_visit(self, node)
     
     def visit_ExceptHandler(self, node):
