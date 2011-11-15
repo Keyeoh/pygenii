@@ -81,7 +81,7 @@ class Stats:
                 
     def pretty_print_module_stats(self, output_file=sys.stdout):
         """Print statistics summary"""
-        max_name_length = max([len(item_name) for (item_name, _, _, _, _) 
+        max_name_length = max([len(item_name) for (item_name, _, _, _, _, _) 
             in self.module_table])
             
         col_sizes = max_name_length + 1, 7, 5, 5, 5, 5
@@ -101,9 +101,9 @@ class Stats:
         
         row_format_str = (" {0:<%d}{1:>%d}{2:>%d}{3:>%d}{4:>%d}{5:>%d}" 
             % row_col_sizes)
-        for name, count, total, min_value, max_value in self.module_table:
-            row_str = row_format_str.format(name, count, total, min_value, 
-                int(total / count), max_value) + '\n'
+        for name, count, total, min_value, max_value, avg in self.module_table:
+            row_str = row_format_str.format(name, count, total, min_value, avg,
+            max_value) + '\n'
             output_file.write(row_str)
             
         output_file.write(sep_str)
@@ -210,6 +210,7 @@ def get_module_list(args):
     
 def parse_module(source_file, module_name, stats, args):
     """Parse given module and return stats"""
+    print("PARSE")
     parse_tree = ast.parse(source_file.read(), module_name)
     
     short_name = os.path.basename(module_name).replace(".py", "")
@@ -255,11 +256,15 @@ def parse_module(source_file, module_name, stats, args):
                 complexity)
                 
             module_complexities.append(complexity)
-            
-    stats.module_table.append((short_name, len(module_complexities), 
-        sum(module_complexities), min(module_complexities), 
-        max(module_complexities)))
-            
+    
+    if module_complexities:
+        complexity_sum = sum(module_complexities)
+        complexity_count = len(module_complexities)
+        stats.module_table.append((short_name, complexity_count, complexity_sum,
+            min(module_complexities), max(module_complexities),
+            int(complexity_sum / complexity_count)))
+    else:
+        stats.module_table.append((short_name, 0, '-', '-', '-', '-'))
        
 def main(argv=None):
     """Main function"""
