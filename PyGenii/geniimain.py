@@ -90,7 +90,6 @@ def get_module_list(args):
     
 def parse_module(source_file, module_name, stats, args):
     """Parse given module and return stats"""
-    print("PARSE")
     parse_tree = ast.parse(source_file.read(), module_name)
     
     short_name = os.path.basename(module_name).replace(".py", "")
