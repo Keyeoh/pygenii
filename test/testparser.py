@@ -1,0 +1,100 @@
+
+"""Test main behaviour of the complexity analyzer"""
+
+
+import unittest
+from PyGenii import geniimain
+
+class TestMainParser(unittest.TestCase):
+    """Test main behaviour of the parser"""
+    
+    
+    class MockModule:
+        """Simulate a module from disk"""
+        def __init__(self):
+            self.code = ""
+        
+        def read(self):
+            return self.code
+            
+    class MockStats:
+        """Simulate a stats object"""
+        def __init__(self):
+            self.complexity_table = []
+            self.summary = {'X':(0, 0), 'C':(0, 0), 'M':(0, 0), 'F':(0, 0)}
+            self.module_table = []
+            
+    class MockArgs:
+        """Simulate an args object"""
+        def __init__(self):
+            self.exceptions = False
+            
+            
+    def setUp(self):
+        self.module = TestMainParser.MockModule()
+        self.stats = TestMainParser.MockStats()
+        self.args = TestMainParser.MockArgs()
+        
+    def test_simple(self):
+        self.module.code = """
+def f(a):
+    print(a + 10)
+        """       
+        expected_complexity = [('X', 'test', 1), ('F', 'test.f', 1)]
+        expected_summary = {'X':(1, 1), 'C':(0, 0), 'M':(0, 0), 'F':(1, 1)}
+        expected_module = [('test', 1, 1, 1, 1, 1)]
+        
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
+        
+    def test_class(self):
+        self.module.code = """
+class C:
+    def __init__(self):
+        self.a = 0
+    def inc(self, n):
+        self.a = self.a + n
+    def get(self):
+        return self.a
+        """
+        expected_complexity = [('X', 'test', 3), ('C', 'test.C', 3), 
+            ('M', 'test.C.__init__', 1), ('M', 'test.C.inc', 1), 
+            ('M', 'test.C.get', 1)]
+        expected_summary = {'X':(1, 3), 'C':(1, 3), 'M':(3, 3), 'F':(0, 0)}
+        expected_module = [('test', 3, 3, 1, 1, 1)]
+        
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
+
+    def test_class_and_function(self):
+        self.module.code = """
+def f(x):
+    return 10
+class C:
+    def __init__(self):
+        self.a = 0
+    def inc(self, n):
+        self.a = self.a + n
+    def get(self):
+        return self.a
+        """
+        expected_complexity = [('X', 'test', 4), ('C', 'test.C', 3), 
+            ('M', 'test.C.__init__', 1), ('M', 'test.C.inc', 1), 
+            ('M', 'test.C.get', 1), ('F', 'test.f', 1)]
+        expected_summary = {'X':(1, 4), 'C':(1, 3), 'M':(3, 3), 'F':(1, 1)}
+        expected_module = [('test', 4, 4, 1, 1, 1)]
+        
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
+        
+if __name__ == "__main__":
+    unittest.main()
