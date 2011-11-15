@@ -56,6 +56,7 @@ class ModuleVisitor(ast.NodeVisitor):
         self.current_status.decision_points = 0
         self.current_status.exit_points = 0
         ast.NodeVisitor.generic_visit(self, node)
+            
         self.current_status.exit_points = max(1, 
             self.current_status.exit_points)
         complexity = (self.current_status.decision_points - 

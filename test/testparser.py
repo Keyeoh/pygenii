@@ -96,5 +96,47 @@ class C:
         self.assertEqual(expected_summary, self.stats.summary)   
         self.assertEqual(expected_module, self.stats.module_table)
         
+    def test_conditional(self):
+        self.module.code = """
+def f(x):
+    a = 5
+    if a < 4:
+        return a
+    elif a > 5:
+        return a + 5
+    else:
+        print("error")
+"""
+        expected_complexity = [('X', 'test', 1), ('F', 'test.f', 1)]
+        expected_summary = {'X':(1, 1), 'C':(0, 0), 'M':(0, 0), 'F':(1, 1)}
+        expected_module = [('test', 1, 1, 1, 1, 1)]
+        
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
+        
+    def test_nested_class(self):
+        self.module.code = """
+class A:
+    class B:
+        def f(self):
+            pass
+    def g(self):
+        pass
+"""
+        expected_complexity = [('X', 'test', 2), ('C', 'test.A', 1), 
+            ('C', 'test.B', 1), ('M', 'test.B.f', 1), ('M', 'test.A.g', 1)]
+        expected_summary = {'X':(1, 2), 'C':(2, 2), 'M':(2, 2), 'F':(0, 0)}
+        expected_module = [('test', 2, 2, 1, 1, 1)]
+        
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
+
+        
 if __name__ == "__main__":
     unittest.main()
