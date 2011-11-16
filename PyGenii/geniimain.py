@@ -126,7 +126,7 @@ def parse_module(source_file, module_name, stats, args):
             if class_name:
                 qualified_name = '.'.join([short_name, class_name, 
                     func_name])
-            else:
+            else:                
                 qualified_name = '.'.join([short_name, func_name])
             stats.complexity_table.append((type_id, qualified_name, complexity))
            
@@ -140,8 +140,8 @@ def parse_module(source_file, module_name, stats, args):
         complexity_sum = sum(module_complexities)
         complexity_count = len(module_complexities)
         stats.module_table.append((short_name, complexity_count, complexity_sum,
-            min(module_complexities), max(module_complexities),
-            int(complexity_sum / complexity_count)))
+            min(module_complexities), int(complexity_sum / complexity_count), 
+            max(module_complexities)))
     else:
         stats.module_table.append((short_name, 0, '-', '-', '-', '-'))
        

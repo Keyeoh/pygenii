@@ -46,7 +46,8 @@ def f(a):
         
         geniimain.parse_module(self.module, "test", self.stats, self.args)         
         
-        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
         self.assertEqual(expected_summary, self.stats.summary)   
         self.assertEqual(expected_module, self.stats.module_table)
         
@@ -68,7 +69,8 @@ class C:
         
         geniimain.parse_module(self.module, "test", self.stats, self.args)         
         
-        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
         self.assertEqual(expected_summary, self.stats.summary)   
         self.assertEqual(expected_module, self.stats.module_table)
 
@@ -84,15 +86,16 @@ class C:
     def get(self):
         return self.a
         """
-        expected_complexity = [('X', 'test', 4), ('C', 'test.C', 3), 
-            ('M', 'test.C.__init__', 1), ('M', 'test.C.inc', 1), 
-            ('M', 'test.C.get', 1), ('F', 'test.f', 1)]
+        expected_complexity = [('X', 'test', 4), ('F', 'test.f', 1), 
+            ('C', 'test.C', 3), ('M', 'test.C.__init__', 1), 
+            ('M', 'test.C.inc', 1), ('M', 'test.C.get', 1)]
         expected_summary = {'X':(1, 4), 'C':(1, 3), 'M':(3, 3), 'F':(1, 1)}
         expected_module = [('test', 4, 4, 1, 1, 1)]
         
         geniimain.parse_module(self.module, "test", self.stats, self.args)         
         
-        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
         self.assertEqual(expected_summary, self.stats.summary)   
         self.assertEqual(expected_module, self.stats.module_table)
         
@@ -113,7 +116,8 @@ def f(x):
         
         geniimain.parse_module(self.module, "test", self.stats, self.args)         
         
-        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
         self.assertEqual(expected_summary, self.stats.summary)   
         self.assertEqual(expected_module, self.stats.module_table)
         
@@ -133,10 +137,32 @@ class A:
         
         geniimain.parse_module(self.module, "test", self.stats, self.args)         
         
-        self.assertEqual(expected_complexity, self.stats.complexity_table)   
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
         self.assertEqual(expected_summary, self.stats.summary)   
         self.assertEqual(expected_module, self.stats.module_table)
 
+    def test_nested_function(self):
+        self.module.code = """
+def f(x):
+    def g(y):
+        return y * 2
+    if x == 0:
+        return 0
+    else:
+        return g(x)
+"""
+        expected_complexity = [('X', 'test', 2), ('F', 'test.f', 1), 
+            ('F', 'test.g', 1)]
+        expected_summary = {'X':(1, 2), 'C':(0, 0), 'M':(0, 0), 'F':(2, 2)}
+        expected_module = [('test', 2, 2, 1, 1, 1)]
+
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
         
 if __name__ == "__main__":
     unittest.main()
