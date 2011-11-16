@@ -88,7 +88,7 @@ def get_module_list(args):
     return module_list                     
 
     
-def parse_module(source_file, module_name, stats, args):
+def parse_module(source_file, module_name, module_stats, args):
     """Parse given module and return stats"""
     parse_tree = ast.parse(source_file.read(), module_name)
     
@@ -100,11 +100,11 @@ def parse_module(source_file, module_name, stats, args):
     mod_visitor = modulevisitor.ModuleVisitor(args.exceptions)
     mod_visitor.visit(parse_tree)
         
-    stats.complexity_table.append(('X', short_name, 
+    module_stats.complexity_table.append(('X', short_name, 
         mod_visitor.module_complexity))
   
-    count, total_complexity = stats.summary['X']
-    stats.summary['X'] = (count + 1, total_complexity + 
+    count, total_complexity = module_stats.summary['X']
+    module_stats.summary['X'] = (count + 1, total_complexity + 
         mod_visitor.module_complexity)
         
     module_complexities = []
@@ -112,11 +112,11 @@ def parse_module(source_file, module_name, stats, args):
     for class_name in mod_visitor.stats:
         if class_name:
             qualified_name = '.'.join([short_name, class_name])
-            stats.complexity_table.append(('C', qualified_name, 
+            module_stats.complexity_table.append(('C', qualified_name, 
                 mod_visitor.class_complexity[class_name]))
            
-            count, total_complexity = stats.summary['C']
-            stats.summary['C'] = (count + 1, total_complexity + 
+            count, total_complexity = module_stats.summary['C']
+            module_stats.summary['C'] = (count + 1, total_complexity + 
                 mod_visitor.class_complexity[class_name])
             type_id = 'M'
         else:
@@ -128,22 +128,22 @@ def parse_module(source_file, module_name, stats, args):
                     func_name])
             else:                
                 qualified_name = '.'.join([short_name, func_name])
-            stats.complexity_table.append((type_id, qualified_name, complexity))
+            module_stats.complexity_table.append((type_id, qualified_name, 
+                complexity))
            
-            count, total_complexity = stats.summary[type_id]
-            stats.summary[type_id] = (count + 1, total_complexity + 
+            count, total_complexity = module_stats.summary[type_id]
+            module_stats.summary[type_id] = (count + 1, total_complexity + 
                 complexity)
                 
             module_complexities.append(complexity)
     
     if module_complexities:
-        complexity_sum = sum(module_complexities)
-        complexity_count = len(module_complexities)
-        stats.module_table.append((short_name, complexity_count, complexity_sum,
-            min(module_complexities), int(complexity_sum / complexity_count), 
+        module_stats.module_table.append((short_name, len(module_complexities), 
+            sum(module_complexities), min(module_complexities), 
+            int(sum(module_complexities) / len(module_complexities)), 
             max(module_complexities)))
     else:
-        stats.module_table.append((short_name, 0, '-', '-', '-', '-'))
+        module_stats.module_table.append((short_name, 0, '-', '-', '-', '-'))
        
 def main(argv=None):
     """Main function"""

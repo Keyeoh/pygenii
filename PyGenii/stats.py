@@ -23,7 +23,8 @@ class Stats:
             for col in range(n_cols)]        
         logging.debug("display_format: %s", display_format)
         
-        col_sizes = [max(a,len(b)) + 2 for (a,b) in zip(col_max_width, display_format['header'])]
+        col_sizes = [max(a, len(b)) + 2 for (a, b) 
+            in zip(col_max_width, display_format['header'])]
         logging.debug("col_sizes: %s", col_sizes)
         
         row_col_sizes = col_sizes
@@ -41,12 +42,15 @@ class Stats:
         
         # Write body        
         logging.debug("col_align: %s", display_format['col_align'])
-        row_format_str = ''.join(["{" + str(i) + ":" + align + "%d}" 
-            for i, align in enumerate(display_format['col_align'])]) % tuple(row_col_sizes)
+        row_format_str = (''.join(["{" + str(i) + ":" + align + "%d}" 
+            for i, align in enumerate(display_format['col_align'])]) 
+            % tuple(row_col_sizes))
         logging.debug("row_format_str: %s", row_format_str)
         
         for row in table:
-            padded_row = [ ' ' * display_format['pad_left'][i] + str(row_elem) + ' ' * display_format['pad_right'][i] for i, row_elem in enumerate(row)]
+            padded_row = [ ' ' * display_format['pad_left'][i] + str(row_elem) 
+                + ' ' * display_format['pad_right'][i] 
+                for i, row_elem in enumerate(row)]
             row_str = (row_format_str.format(*padded_row) + '\n')
             output_file.write(row_str)
         
@@ -81,7 +85,8 @@ class Stats:
             display_format['col_align'] = ['^', '<', '>'] 
             display_format['pad_left'] = [1, 1, 1]
             display_format['pad_right'] = [1, 1, 2]
-            self.pretty_print(self.complexity_table, display_format, output_file)    
+            self.pretty_print(self.complexity_table, display_format, 
+                output_file)    
             
     def print_summary(self, args, output_file):
         """Print summary if asked by the user"""
@@ -94,11 +99,12 @@ class Stats:
         if args.module_stats and len(self.complexity_table) > 0:
             output_file.write("\nModule statistics\n")
             display_format = {}
-            display_format['header'] = ["Name", "Count", "Sum", "Min", "Avg", "Max"]
+            display_format['header'] = ["Name", "Count", "Sum", "Min", "Avg", 
+                "Max"]
             display_format['col_align'] = ['<', '>', '>', '>', '>', '>'] 
             display_format['pad_left'] = [1, 1, 1, 1, 1, 1]
             display_format['pad_right'] = [1, 1, 1, 1, 1, 1]
-            self.pretty_print(self.module_table, display_format, output_file)              
+            self.pretty_print(self.module_table, display_format, output_file)
         
     def pretty_print_summary(self, output_file=sys.stdout):
         """Print statistics summary"""

@@ -164,5 +164,48 @@ def f(x):
         self.assertEqual(expected_summary, self.stats.summary)   
         self.assertEqual(expected_module, self.stats.module_table)
         
+    def test_for_and_exit1(self):
+        self.module.code = """
+def f(x):
+    for i in range(5):
+        if i < 3:
+            print(i)
+        else:
+            return
+    print("foo")
+"""
+        expected_complexity = [('X', 'test', 2), ('F', 'test.f', 2)]
+        expected_summary = {'X':(1, 2), 'C':(0, 0), 'M':(0, 0), 'F':(1, 2)}
+        expected_module = [('test', 1, 2, 2, 2, 2)]
+
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
+        
+    def test_for_and_exit2(self):
+        self.module.code = """
+def f(x):
+    for i in range(5):
+        if i < 3:
+            return 5
+        else:
+            return -1
+    print("foo")
+"""
+        expected_complexity = [('X', 'test', 1), ('F', 'test.f', 1)]
+        expected_summary = {'X':(1, 1), 'C':(0, 0), 'M':(0, 0), 'F':(1, 1)}
+        expected_module = [('test', 1, 1, 1, 1, 1)]
+
+        geniimain.parse_module(self.module, "test", self.stats, self.args)         
+        
+        self.assertEqual(set(expected_complexity), 
+            set(self.stats.complexity_table))   
+        self.assertEqual(expected_summary, self.stats.summary)   
+        self.assertEqual(expected_module, self.stats.module_table)
+
+        
 if __name__ == "__main__":
     unittest.main()
